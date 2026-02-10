@@ -4,15 +4,13 @@ import streamlit as st
 st.set_page_config(page_title="糖尿病風險評估工具", page_icon="🩺")
 
 # 自定義 CSS 讓介面更專業
+# 修正後的 CSS 部分
 st.markdown("""
     <style>
     .main { background-color: #f5f7f9; }
     .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     </style>
-    """, unsafe_content_type=True)
-
-st.title("🩺 糖尿病風險衛教計算器")
-st.caption("台南奇美醫學中心兒科部 蔡瑋峻醫師 關心您的健康")
+    """, unsafe_allow_html=True)  # <-- 請確認這裡是 unsafe_allow_html=True
 
 # 重要免責聲明
 st.warning("⚠️ 本網站預測結果僅提供參考，實際結果仍需就醫確認。若有相關症狀請諮詢醫師。")
