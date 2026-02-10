@@ -11,28 +11,40 @@ st.set_page_config(
 # 2. 手機端視覺優化 (客製化 CSS)
 st.markdown("""
     <style>
-    /* 設定主背景色與字體 */
+    /* 1. 設定全域背景為極淺灰色，增加層次感 */
     .stApp { background-color: #F8FAFC; }
     
-    /* 讓手機端的標題與文字更清楚 */
-    h1 { color: #007380; font-family: 'PingFang TC', 'Heiti TC', sans-serif; font-size: 2rem !important; }
-    p, label { font-size: 1.15rem !important; font-weight: 600 !important; color: #1E293B !important; }
+    /* 2. 標題與標籤文字：強制使用深藍黑色，確保白底黑字清晰 */
+    h1, h2, h3, p, label { 
+        color: #0F172A !important; 
+        font-family: 'PingFang TC', 'Heiti TC', sans-serif;
+    }
 
-    /* 強化輸入框顯示，方便手指點擊 */
+    /* 3. 關鍵修正：強制輸入框背景為白色，文字為黑色 */
     .stNumberInput div div input {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
         font-size: 1.3rem !important;
         padding: 12px !important;
-        background-color: #FFFFFF !important;
-        border: 2px solid #E2E8F0 !important;
+        border: 2px solid #CBD5E1 !important; /* 加入灰色邊框，讓邊界更明顯 */
         border-radius: 10px !important;
     }
 
-    /* 數值卡片設計 */
+    /* 4. 修正側邊欄與下拉選單的文字顏色 */
+    .stSelectbox div div div, .stRadio div label {
+        color: #0F172A !important;
+    }
+
+    /* 5. 調整按鈕（+ / -）的對比度 */
+    button[p-testid="stBaseButton-secondary"] {
+        border: 2px solid #007380 !important;
+    }
+
+    /* 6. 卡片設計：計算結果區塊 */
     div[data-testid="stMetric"] {
-        background-color: #ffffff;
+        background-color: #ffffff !important;
         border-radius: 15px;
-        padding: 18px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         border-top: 5px solid #007380;
     }
     </style>
