@@ -1,119 +1,109 @@
 import streamlit as st
 import numpy as np
 
-# 1. 網頁基礎設定
-st.set_page_config(
-    page_title="糖尿病風險評估-蔡瑋峻醫師", 
-    page_icon="🩺", 
-    layout="centered"
-)
+# 1. 頁面基礎設定與手機視覺優化
+st.set_page_config(page_title="代謝與心血管風險評估", page_icon="🩺", layout="centered")
 
-# 2. 手機端視覺優化 (客製化 CSS)
 st.markdown("""
     <style>
-    /* 1. 設定全域背景為極淺灰色，增加層次感 */
     .stApp { background-color: #F8FAFC; }
-    
-    /* 2. 標題與標籤文字：強制使用深藍黑色，確保白底黑字清晰 */
-    h1, h2, h3, p, label { 
-        color: #0F172A !important; 
-        font-family: 'PingFang TC', 'Heiti TC', sans-serif;
-    }
-
-    /* 3. 關鍵修正：強制輸入框背景為白色，文字為黑色 */
+    h1, h2, h3, p, label { color: #0F172A !important; font-family: 'PingFang TC', sans-serif; }
+    /* 強制輸入框白底黑字，解決手機看不見問題 */
     .stNumberInput div div input {
         background-color: #FFFFFF !important;
         color: #000000 !important;
-        font-size: 1.3rem !important;
-        padding: 12px !important;
-        border: 2px solid #CBD5E1 !important; /* 加入灰色邊框，讓邊界更明顯 */
+        font-size: 1.25rem !important;
+        padding: 10px !important;
+        border: 2px solid #CBD5E1 !important;
         border-radius: 10px !important;
     }
-
-    /* 4. 修正側邊欄與下拉選單的文字顏色 */
-    .stSelectbox div div div, .stRadio div label {
-        color: #0F172A !important;
-    }
-
-    /* 5. 調整按鈕（+ / -）的對比度 */
-    button[p-testid="stBaseButton-secondary"] {
-        border: 2px solid #007380 !important;
-    }
-
-    /* 6. 卡片設計：計算結果區塊 */
     div[data-testid="stMetric"] {
-        background-color: #ffffff !important;
-        border-radius: 15px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        border-top: 5px solid #007380;
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border-top: 6px solid #007380;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 標題與研究來源說明
-st.title("🩺 糖尿病風險衛教計算器")
-st.markdown("### 台南奇美醫院 蔡瑋峻醫師 關心您")
-st.info("💡 **實證醫學基礎**：本工具採用 2023 年《BMJ Open》針對 64,875 名台灣人之研究模型 [cite: 6, 12, 141]。")
+st.title("🩺 糖尿病與心血管風險評估")
+st.markdown("**台南奇美醫院 蔡瑋峻醫師 專業衛教工具**")
 
-# --- 第一區塊：生理指標輸入 (設定間距 0.1) ---
-st.header("1. 請輸入生理數值")
-st.write("點擊「+」或「-」可微調 0.1 單位")
+# --- 側邊欄：共同基礎資料 ---
+with st.sidebar:
+    st.header("📋 基礎個人資料")
+    age = st.number_input("年齡", 30, 70, 38)
+    gender = st.selectbox("性別", ["男", "女"], index=0)
+    family_dm = st.radio("糖尿病家族史", ["沒有", "有"], index=0)
+    edu = st.selectbox("教育程度", options=[1,2,3,4,5,6,7], 
+                       format_func=lambda x: {1:"不識字", 7:"研究所"}.get(x, "一般"), index=6)
+    betel = st.radio("是否有吃檳榔習慣", ["無", "有"], index=0)
 
+# --- 第一模組：糖尿病風險 (BMJ Open 2023) ---
+st.header("1. 糖尿病篩檢 (2023 實證模型)")
 col1, col2 = st.columns(2)
 with col1:
     h = st.number_input("身高 (cm)", value=170.0, step=0.1, format="%.1f")
-    w = st.number_input("體重 (kg)", value=70.0, step=0.1, format="%.1f")
+    w = st.number_input("體重 (kg)", value=78.2, step=0.1, format="%.1f")
 with col2:
-    waist = st.number_input("腰圍 (cm)", value=85.0, step=0.1, format="%.1f")
-    hip = st.number_input("臀圍 (cm)", value=95.0, step=0.1, format="%.1f")
+    waist = st.number_input("腰圍 (cm)", value=89.0, step=0.1, format="%.1f")
+    hip = st.number_input("臀圍 (cm)", value=100.0, step=0.1, format="%.1f")
 
-# --- 第二區塊：其他關鍵風險因子 ---
-st.header("2. 其他基本資料")
-c_age = st.number_input("年齡", 30, 70, 38)
-c_gender = st.selectbox("性別", ["男", "女"], index=0)
-
-with st.expander("📝 點擊輸入學歷與生活史"):
-    c_edu = st.selectbox("教育程度", 
-        options=[1, 2, 3, 4, 5, 6, 7], 
-        format_func=lambda x: {1:"不識字", 2:"自修", 3:"小學", 4:"國中", 5:"高中", 6:"大學", 7:"研究所"}[x],
-        index=6)
-    c_family = st.radio("糖尿病家族史 (父母/兄弟姊妹)", ["沒有", "有"], index=0)
-    c_betel = st.radio("是否有吃檳榔習慣", ["從未或極少", "有"], index=0)
-
-# --- 運算邏輯 (引用論文 Table 2 Model 1 係數) ---
+# 糖尿病計算邏輯 [cite: 193, 231, 232]
 bmi = w / ((h / 100) ** 2)
 whr = waist / hip
+logit_dm = -12.935 + (0.046 * age) + (-0.215 if gender == "男" else 0) + (0.132 * bmi) + (4.950 * whr) + (-0.071 * edu) + (0.593 if family_dm == "有" else 0) + (0.184 if betel == "有" else 0)
+p_dm = 1 / (1 + np.exp(-logit_dm))
 
-# 論文係數 [cite: 231, 232]
-intercept = -12.935 
-b_age = 0.046 
-b_sex = -0.215 if c_gender == "男" else 0.0
-b_bmi = 0.132 
-b_whr = 4.950 
-b_edu = -0.071 
-b_family = 0.593 if c_family == "有" else 0.0
-b_betel = 0.184 if c_betel == "有" else 0.0
-
-logit_p = intercept + (b_age * c_age) + b_sex + (b_bmi * bmi) + (b_whr * whr) + (b_edu * c_edu) + b_family + b_betel
-probability = 1 / (1 + np.exp(-logit_p))
-
-# --- 第三區塊：結果呈現 ---
-st.divider()
-st.subheader("📊 您目前的生理指數")
 m1, m2 = st.columns(2)
-m1.metric("計算所得 BMI", f"{bmi:.2f}")
-m2.metric("計算所得 腰臀比 (WHR)", f"{whr:.2f}")
+m1.metric("計算 BMI", f"{bmi:.2f}")
+m2.metric("腰臀比 (WHR)", f"{whr:.2f}")
 
-st.subheader("🏆 風險預測結果")
-# 論文建議之糖尿病預測切截點為 0.0065 [cite: 247]
-if probability >= 0.0065:
-    st.error(f"### 風險值：{probability:.4f}")
-    st.markdown("⚠️ **評估結果：高於切截點 (0.0065)**")
-    st.write("根據 2023 台灣 Biobank 模型預估，您具備較高的未診斷糖尿病風險 [cite: 32, 353]。")
+if p_dm >= 0.0065:
+    st.error(f"未診斷糖尿病預測值：{p_dm:.4f} (高風險)")
 else:
-    st.success(f"### 風險值：{probability:.4f}")
-    st.markdown("✅ **評估結果：低於切截點 (0.0065)**")
-    st.write("目前風險較低，請繼續保持理想的腰圍與體重指標。")
+    st.success(f"未診斷糖尿病預測值：{p_dm:.4f} (低風險)")
 
-# 警語
-st.warning("⚠️ 本預測結果僅供參考。若有相關症狀，請持本結果向醫師諮詢並進行抽血確認 [cite: 349, 350]。")
+st.divider()
+
+# --- 第二模組：心血管風險 (IJERPH 2022) ---
+st.header("2. 心血管評估 (2022 實證評分)")
+show_cvd = st.checkbox("🔍 我想了解未來 10 年重大心血管事件風險 (中風/心臟病)")
+
+if show_cvd:
+    st.info("💡 本模型預測未來 10 年發生中風或冠心病之機率 。")
+    c1, c2 = st.columns(2)
+    with c1:
+        sbp = st.number_input("收縮壓 (SBP, mmHg)", value=120, step=1)
+        smoking = st.radio("吸菸習慣", ["從未吸菸", "已戒菸", "目前吸菸"], index=0)
+    with c2:
+        hdl = st.number_input("高密度脂蛋白 (HDL-C)", value=50, step=1)
+        existing_dm = st.radio("是否已確診糖尿病", ["否", "是"], index=0)
+
+    # 2022 論文點數邏輯計算 (精確化)
+    cvd_points = 0
+    # 年齡點數
+    if age >= 60: cvd_points += 4
+    elif age >= 50: cvd_points += 2
+    # 吸菸
+    if smoking == "目前吸菸": cvd_points += 3
+    # 血壓
+    if sbp >= 160: cvd_points += 5
+    elif sbp >= 140: cvd_points += 3
+    # 糖尿病史
+    if existing_dm == "是": cvd_points += 4
+    # HDL
+    if hdl < 40: cvd_points += 2
+    
+    st.subheader("🏆 10 年心血管事件風險點數")
+    st.metric("總風險積分", f"{cvd_points} 分")
+    
+    if cvd_points >= 7:
+        st.error("🔴 **高風險群**：建議立即諮詢醫師進行心血管評估。")
+    elif cvd_points >= 4:
+        st.warning("🟡 **中度風險**：請注意血壓控管與生活作息調整。")
+    else:
+        st.success("🟢 **低風險群**：請繼續保持健康生活習慣。")
+
+st.warning("⚠️ 本工具僅供診間衛教參考，實際診斷需由醫療人員確認。")
